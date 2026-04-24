@@ -46,9 +46,6 @@ def sleep():
 
 @task_queue.task(bind=True,
                  autoretry_for=(ValueError,),
-                 retry_kwargs={'max_retries': 9, 'countdown': 5},
-                 retry_backoff_max=600,
-                 retry_backoff=True
                  )
 def retry_test(self):
     print(f"Exacuting task id {self.request.id}")

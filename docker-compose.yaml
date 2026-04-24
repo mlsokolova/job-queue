@@ -10,8 +10,39 @@ services:
     ports:     
       - "6379:6379"   
   
+  celery-worker-high:  
+    build: .
+    image: job-queue-celery
+    depends_on: 
+      - redis
+    container_name: celery-worker-high
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    command: "celery -A task_queue worker --loglevel=DEBUG -E -Q HIGH --concurrency=3"
+    networks: 
+      - job-queue
+    hostname: celery-worker-high
+    volumes:
+      - .:/app
+  
+  celery-worker-normal:  
+    build: .
+    image: job-queue-celery
+    depends_on: 
+      - redis
+    container_name: celery-worker-normal
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    command: "celery -A task_queue worker --loglevel=DEBUG -E -Q NORMAL --concurrency=2"
+    networks: 
+      - job-queue
+    hostname: celery-worker-normal
+    volumes:
+      - .:/app
+
   celery-worker:  
     build: .
+    image: job-queue-celery
     depends_on: 
       - redis
     container_name: celery-worker
@@ -23,9 +54,10 @@ services:
     hostname: celery-worker
     volumes:
       - .:/app
-    
+
   celery-flower:  
     build: .
+    image: job-queue-celery
     depends_on: 
       - redis
     container_name: celery-flower
