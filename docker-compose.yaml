@@ -18,7 +18,7 @@ services:
     container_name: celery-worker-high
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-    command: "celery -A task_queue worker --loglevel=DEBUG -E -Q HIGH --concurrency=3"
+    command: "celery -A task_queue worker --loglevel=INFO -Q HIGH --concurrency=3"
     networks: 
       - job-queue
     hostname: celery-worker-high
@@ -33,7 +33,7 @@ services:
     container_name: celery-worker-normal
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-    command: "celery -A task_queue worker --loglevel=DEBUG -E -Q NORMAL --concurrency=2"
+    command: "celery -A task_queue worker --loglevel=INFO -E -Q NORMAL --concurrency=2"
     networks: 
       - job-queue
     hostname: celery-worker-normal
@@ -48,7 +48,7 @@ services:
     container_name: celery-worker
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-    command: "celery -A task_queue worker --loglevel=DEBUG -E --concurrency=1"
+    command: "celery -A task_queue worker --loglevel=INFO -E --concurrency=1"
     networks: 
       - job-queue
     hostname: celery-worker

@@ -10,8 +10,5 @@ for i in range(5):
 
 # Expotential backoff retry
 retry_test.apply_async(priority=Priority.NORMAL,
-                       retry_kwargs={'max_retries': 9, 'countdown': 5},
-                       retry_backoff_max=600,
-                       retry_backoff=True
+                       
                        )
-
