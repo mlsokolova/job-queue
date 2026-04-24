@@ -1,0 +1,46 @@
+#version: '3.8'
+
+services: 
+  redis:    
+    image: redis
+    container_name: redis 
+    networks: 
+      - job-queue
+    hostname: redis
+    ports:     
+      - "6379:6379"   
+  
+  celery-worker:  
+    build: .
+    depends_on: 
+      - redis
+    container_name: celery-worker
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    command: "celery -A task_queue worker --loglevel=DEBUG -E --concurrency=5"
+    networks: 
+      - job-queue
+    hostname: celery-worker
+    volumes:
+      - .:/app
+    
+  celery-flower:  
+    build: .
+    depends_on: 
+      - redis
+    container_name: celery-flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+    command: celery -A task_queue flower
+    ports:
+      - "5555:5555"
+    networks: 
+      - job-queue
+    hostname: celery-flower
+    volumes:
+      - .:/app
+
+networks:  
+  job-queue:   
+    driver: bridge
