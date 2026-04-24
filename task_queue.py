@@ -1,45 +1,58 @@
 from celery import Celery
 from kombu import Queue
 import time
+from enum import IntEnum
+
+class Priority(IntEnum):
+    """
+    Priority levels for tasks.
+    Celery and Redis supports priority range from 0 to 9
+    Lower value corresponds higher priority level
+    """
+
+    LOW = 9
+    NORMAL = 4
+    HIGH = 0
+
 
 task_queue = Celery(
-    "tasks",
+    "task_queue",
     broker="redis://redis:6379/0",
     backend="redis://redis:6379/1",
 )
 
-#task_queue.conf.task_queues = (
-#    Queue("LOW"),
-#    Queue("NORMAL"),
-#    Queue("HIGH"),
-#)
-
-#task_queue.conf.task_default_queue = "NORMAL"
-
-
-task_queue.conf.broker_transport_options = {
-    'queue_order_strategy': 'priority',
-}
-
-task_queue.conf.broker_transport_options = {
-    'priority_steps': list(range(3)),
+#A dict of additional options passed to the underlying transport(Redis in our case)
+task_queue.conf.broker_transport_options = { 
+    'priority_steps': list(range(9)),
     'sep': ':',
     'queue_order_strategy': 'priority',
 }
 
-task_queue.conf.task_create_missing_queues = True
+#workers’ default prefetch count
+task_queue.conf.worker_prefetch_multiplier = 1 
 
-task_queue.conf.worker_prefetch_multiplier = 1
-task_acks_late = True
+# Late ack means the task messages will be acknowledged after the task has been executed, not right before (the default behavior).
+task_acks_late = True 
 
-task_queue.conf.task_default_priority = 1
-task_queue.conf.task_queue_max_priority = 3
+# default task priority
+task_queue.conf.task_default_priority = Priority.NORMAL 
 
-@task_queue.task(queue='celery', priority=0)
-def high_priority():
-    time.sleep(10)
+# default queue priority
+task_queue.conf.task_queue_max_priority = 9 
 
+@task_queue.task(queue='celery', priority=Priority.LOW)
+def sleep():
+    time.sleep(5)    
 
-@task_queue.task(queue='celery', priority=1)
-def low_priority():
-    time.sleep(10)
+@task_queue.task(bind=True,
+                 autoretry_for=(ValueError,),
+                 retry_kwargs={'max_retries': 9, 'countdown': 5},
+                 retry_backoff_max=600,
+                 retry_backoff=True
+                 )
+def retry_test(self):
+    print(f"Exacuting task id {self.request.id}")
+    print(f"retry count {self.request.retries}")
+    if self.request.retries < 8:
+        raise ValueError
+      
