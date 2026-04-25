@@ -32,6 +32,7 @@ task_queue.conf.broker_transport_options = {
 task_queue.conf.worker_prefetch_multiplier = 1 
 
 # Late ack means the task messages will be acknowledged after the task has been executed, not right before (the default behavior).
+# If the worker crashes, the task is re-queued and executed by another worker
 task_acks_late = True 
 
 # default task priority
